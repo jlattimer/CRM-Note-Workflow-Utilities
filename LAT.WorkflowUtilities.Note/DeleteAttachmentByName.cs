@@ -4,100 +4,95 @@ using Microsoft.Xrm.Sdk.Workflow;
 using System;
 using System.Activities;
 using System.Text;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace LAT.WorkflowUtilities.Note
 {
-	public class DeleteAttachmentByName : CodeActivity
-	{
-		[RequiredArgument]
-		[Input("Note With Attachment To Remove")]
-		[ReferenceTarget("annotation")]
-		public InArgument<EntityReference> NoteWithAttachment { get; set; }
+    public sealed class DeleteAttachmentByName : WorkFlowActivityBase
+    {
+        public DeleteAttachmentByName() : base(typeof(DeleteAttachmentByName)) { }
 
-		[RequiredArgument]
-		[Input("File Name With Extension")]
-		public InArgument<string> FileName { get; set; }
+        [RequiredArgument]
+        [Input("Note With Attachment To Remove")]
+        [ReferenceTarget("annotation")]
+        public InArgument<EntityReference> NoteWithAttachment { get; set; }
 
-		[RequiredArgument]
-		[Input("Add Delete Notice As Text?")]
-		[Default("false")]
-		public InArgument<bool> AppendNotice { get; set; }
+        [RequiredArgument]
+        [Input("File Name With Extension")]
+        public InArgument<string> FileName { get; set; }
 
-		[Output("Number Of Attachments Deleted")]
-		public OutArgument<int> NumberOfAttachmentsDeleted { get; set; }
+        [RequiredArgument]
+        [Input("Add Delete Notice As Text?")]
+        [Default("false")]
+        public InArgument<bool> AppendNotice { get; set; }
 
-		protected override void Execute(CodeActivityContext executionContext)
-		{
-			ITracingService tracer = executionContext.GetExtension<ITracingService>();
-			IWorkflowContext context = executionContext.GetExtension<IWorkflowContext>();
-			IOrganizationServiceFactory serviceFactory = executionContext.GetExtension<IOrganizationServiceFactory>();
-			IOrganizationService service = serviceFactory.CreateOrganizationService(context.UserId);
+        [Output("Number Of Attachments Deleted")]
+        public OutArgument<int> NumberOfAttachmentsDeleted { get; set; }
 
-			try
-			{
-				EntityReference noteWithAttachment = NoteWithAttachment.Get(executionContext);
-				string fileName = FileName.Get(executionContext);
-				bool appendNotice = AppendNotice.Get(executionContext);
+        protected override void ExecuteCrmWorkFlowActivity(CodeActivityContext context, LocalWorkflowContext localContext)
+        {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
+            if (localContext == null)
+                throw new ArgumentNullException(nameof(localContext));
 
-				Entity note = GetNote(service, noteWithAttachment.Id);
-				if (!CheckForAttachment(note))
-					return;
+            EntityReference noteWithAttachment = NoteWithAttachment.Get(context);
+            string fileName = FileName.Get(context);
+            bool appendNotice = AppendNotice.Get(context);
 
-				StringBuilder notice = new StringBuilder();
-				int numberOfAttachmentsDeleted = 0;
+            Entity note = GetNote(localContext.OrganizationService, noteWithAttachment.Id);
+            if (!CheckForAttachment(note))
+                return;
 
-				if (String.Equals(note.GetAttributeValue<string>("filename"), fileName, StringComparison.CurrentCultureIgnoreCase))
-				{
-					numberOfAttachmentsDeleted++;
+            StringBuilder notice = new StringBuilder();
+            int numberOfAttachmentsDeleted = 0;
 
-					if (appendNotice)
-						notice.AppendLine("Deleted Attachment: " + note.GetAttributeValue<string>("filename") + " " +
-						                  DateTime.Now.ToShortDateString());
+            if (String.Equals(note.GetAttributeValue<string>("filename"), fileName, StringComparison.CurrentCultureIgnoreCase))
+            {
+                numberOfAttachmentsDeleted++;
 
-					UpdateNote(service, note, notice.ToString());
-				}
+                if (appendNotice)
+                    notice.AppendLine("Deleted Attachment: " + note.GetAttributeValue<string>("filename") + " " +
+                                      DateTime.Now.ToShortDateString());
 
-				NumberOfAttachmentsDeleted.Set(executionContext, numberOfAttachmentsDeleted);
-			}
-			catch (Exception ex)
-			{
-				tracer.Trace("Exception: {0}", ex.ToString());
-			}
-		}
+                UpdateNote(localContext.OrganizationService, note, notice.ToString());
+            }
 
-		private static bool CheckForAttachment(Entity note)
-		{
-			object oIsAttachment;
-			bool hasValue = note.Attributes.TryGetValue("isdocument", out oIsAttachment);
-			if (!hasValue)
-				return false;
+            NumberOfAttachmentsDeleted.Set(context, numberOfAttachmentsDeleted);
+        }
 
-			return (bool)oIsAttachment;
-		}
+        private static bool CheckForAttachment(Entity note)
+        {
+            bool hasValue = note.Attributes.TryGetValue("isdocument", out var oIsAttachment);
+            if (!hasValue)
+                return false;
 
-		private static Entity GetNote(IOrganizationService service, Guid noteId)
-		{
-			return service.Retrieve("annotation", noteId, new ColumnSet("filename", "isdocument", "notetext"));
-		}
+            return (bool)oIsAttachment;
+        }
 
-		private void UpdateNote(IOrganizationService service, Entity note, string notice)
-		{
-			Entity updateNote = new Entity("annotation");
-			updateNote.Id = note.Id;
-			if (!string.IsNullOrEmpty(notice))
-			{
-				string newText = note.GetAttributeValue<string>("notetext");
-				if (!string.IsNullOrEmpty(newText))
-					newText += "\r\n";
+        private static Entity GetNote(IOrganizationService service, Guid noteId)
+        {
+            return service.Retrieve("annotation", noteId, new ColumnSet("filename", "isdocument", "notetext"));
+        }
 
-				updateNote["notetext"] = newText + notice;
-			}
-			updateNote["isdocument"] = false;
-			updateNote["filename"] = null;
-			updateNote["documentbody"] = null;
-			updateNote["filesize"] = null;
+        private static void UpdateNote(IOrganizationService service, Entity note, string notice)
+        {
+            Entity updateNote = new Entity("annotation") { Id = note.Id };
+            if (!string.IsNullOrEmpty(notice))
+            {
+                string newText = note.GetAttributeValue<string>("notetext");
+                if (!string.IsNullOrEmpty(newText))
+                    newText += "\r\n";
 
-			service.Update(updateNote);
-		}
-	}
+                updateNote["notetext"] = newText + notice;
+            }
+            updateNote["isdocument"] = false;
+            updateNote["filename"] = null;
+            updateNote["documentbody"] = null;
+            updateNote["filesize"] = null;
+
+            service.Update(updateNote);
+        }
+    }
 }

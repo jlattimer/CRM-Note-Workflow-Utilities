@@ -91,6 +91,7 @@
     </Compile>
     <Compile Include="UpdateNoteText.cs" />
     <Compile Include="UpdateNoteTitle.cs" />
+    <Compile Include="WorkFlowActivityBase.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="LATKey.snk" />

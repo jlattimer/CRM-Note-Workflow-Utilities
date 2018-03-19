@@ -3,63 +3,63 @@ using Microsoft.Xrm.Sdk.Query;
 using Microsoft.Xrm.Sdk.Workflow;
 using System;
 using System.Activities;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace LAT.WorkflowUtilities.Note
 {
-	public class MoveNote : CodeActivity
-	{
-		[RequiredArgument]
-		[Input("Note To Move")]
-		[ReferenceTarget("annotation")]
-		public InArgument<EntityReference> NoteToMove { get; set; }
+    public sealed class MoveNote : WorkFlowActivityBase
+    {
+        public MoveNote() : base(typeof(MoveNote)) { }
 
-		[Input("Record Dynamic Url")]
-		[RequiredArgument]
-		public InArgument<string> RecordUrl { get; set; }
+        [RequiredArgument]
+        [Input("Note To Move")]
+        [ReferenceTarget("annotation")]
+        public InArgument<EntityReference> NoteToMove { get; set; }
 
-		[Output("Was Note Moved")]
-		public OutArgument<bool> WasNoteMoved { get; set; }
+        [Input("Record Dynamic Url")]
+        [RequiredArgument]
+        public InArgument<string> RecordUrl { get; set; }
 
-		protected override void Execute(CodeActivityContext executionContext)
-		{
-			ITracingService tracer = executionContext.GetExtension<ITracingService>();
-			IWorkflowContext context = executionContext.GetExtension<IWorkflowContext>();
-			IOrganizationServiceFactory serviceFactory = executionContext.GetExtension<IOrganizationServiceFactory>();
-			IOrganizationService service = serviceFactory.CreateOrganizationService(context.UserId);
+        [Output("Was Note Moved")]
+        public OutArgument<bool> WasNoteMoved { get; set; }
 
-			try
-			{
-				EntityReference noteToMove = NoteToMove.Get(executionContext);
-				string recordUrl = RecordUrl.Get<string>(executionContext);
+        protected override void ExecuteCrmWorkFlowActivity(CodeActivityContext context, LocalWorkflowContext localContext)
+        {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
+            if (localContext == null)
+                throw new ArgumentNullException(nameof(localContext));
 
-				var dup = new DynamicUrlParser(recordUrl);
+            EntityReference noteToMove = NoteToMove.Get(context);
+            string recordUrl = RecordUrl.Get<string>(context);
 
-				string newEntityLogical = dup.GetEntityLogicalName(service);
+            var dup = new DynamicUrlParser(recordUrl);
 
-				Entity note = GetNote(service, noteToMove.Id);
-				if (note.GetAttributeValue<EntityReference>("objectid").Id == dup.Id && note.GetAttributeValue<EntityReference>("objectid").LogicalName == newEntityLogical)
-				{
-					WasNoteMoved.Set(executionContext, false);
-					return;
-				}
+            string newEntityLogical = dup.GetEntityLogicalName(localContext.OrganizationService);
 
-				Entity updateNote = new Entity("annotation");
-				updateNote.Id = noteToMove.Id;
-				updateNote["objectid"] = new EntityReference(newEntityLogical, dup.Id);
+            Entity note = GetNote(localContext.OrganizationService, noteToMove.Id);
+            if (note.GetAttributeValue<EntityReference>("objectid").Id == dup.Id
+                && note.GetAttributeValue<EntityReference>("objectid").LogicalName == newEntityLogical)
+            {
+                WasNoteMoved.Set(context, false);
+                return;
+            }
 
-				service.Update(updateNote);
+            Entity updateNote = new Entity("annotation")
+            {
+                Id = noteToMove.Id,
+                ["objectid"] = new EntityReference(newEntityLogical, dup.Id)
+            };
 
-				WasNoteMoved.Set(executionContext, true);
-			}
-			catch (Exception e)
-			{
-				throw new InvalidPluginExecutionException(e.Message);
-			}
-		}
+            localContext.OrganizationService.Update(updateNote);
 
-		private Entity GetNote(IOrganizationService service, Guid noteId)
-		{
-			return service.Retrieve("annotation", noteId, new ColumnSet("objectid", "objecttypecode"));
-		}
-	}
+            WasNoteMoved.Set(context, true);
+        }
+
+        private static Entity GetNote(IOrganizationService service, Guid noteId)
+        {
+            return service.Retrieve("annotation", noteId, new ColumnSet("objectid", "objecttypecode"));
+        }
+    }
 }

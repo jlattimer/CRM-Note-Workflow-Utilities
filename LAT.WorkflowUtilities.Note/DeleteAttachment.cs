@@ -5,139 +5,132 @@ using System;
 using System.Activities;
 using System.Collections.Generic;
 using System.Text;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace LAT.WorkflowUtilities.Note
 {
-	public sealed class DeleteAttachment : CodeActivity
-	{
-		[RequiredArgument]
-		[Input("Note With Attachments To Remove")]
-		[ReferenceTarget("annotation")]
-		public InArgument<EntityReference> NoteWithAttachment { get; set; }
+    public sealed class DeleteAttachment : WorkFlowActivityBase
+    {
+        public DeleteAttachment() : base(typeof(DeleteAttachment)) { }
 
-		[Input("Delete >= Than X Bytes (Empty = 2,147,483,647)")]
-		public InArgument<int> DeleteSizeMax { get; set; }
+        [RequiredArgument]
+        [Input("Note With Attachments To Remove")]
+        [ReferenceTarget("annotation")]
+        public InArgument<EntityReference> NoteWithAttachment { get; set; }
 
-		[Input("Delete <= Than X Bytes (Empty = 0)")]
-		public InArgument<int> DeleteSizeMin { get; set; }
+        [Input("Delete >= Than X Bytes (Empty = 2,147,483,647)")]
+        public InArgument<int> DeleteSizeMax { get; set; }
 
-		[Input("Limit To Extensions (Comma Delimited, Empty = Ignore)")]
-		public InArgument<string> Extensions { get; set; }
+        [Input("Delete <= Than X Bytes (Empty = 0)")]
+        public InArgument<int> DeleteSizeMin { get; set; }
 
-		[RequiredArgument]
-		[Input("Add Delete Notice As Text?")]
-		[Default("false")]
-		public InArgument<bool> AppendNotice { get; set; }
+        [Input("Limit To Extensions (Comma Delimited, Empty = Ignore)")]
+        public InArgument<string> Extensions { get; set; }
 
-		[Output("Number Of Attachments Deleted")]
-		public OutArgument<int> NumberOfAttachmentsDeleted { get; set; }
+        [RequiredArgument]
+        [Input("Add Delete Notice As Text?")]
+        [Default("false")]
+        public InArgument<bool> AppendNotice { get; set; }
 
-		protected override void Execute(CodeActivityContext executionContext)
-		{
-			ITracingService tracer = executionContext.GetExtension<ITracingService>();
-			IWorkflowContext context = executionContext.GetExtension<IWorkflowContext>();
-			IOrganizationServiceFactory serviceFactory = executionContext.GetExtension<IOrganizationServiceFactory>();
-			IOrganizationService service = serviceFactory.CreateOrganizationService(context.UserId);
+        [Output("Number Of Attachments Deleted")]
+        public OutArgument<int> NumberOfAttachmentsDeleted { get; set; }
 
-			try
-			{
-				EntityReference noteWithAttachment = NoteWithAttachment.Get(executionContext);
-				int deleteSizeMax = DeleteSizeMax.Get(executionContext);
-				int deleteSizeMin = DeleteSizeMin.Get(executionContext);
-				string extensions = Extensions.Get(executionContext);
-				bool appendNotice = AppendNotice.Get(executionContext);
+        protected override void ExecuteCrmWorkFlowActivity(CodeActivityContext context, LocalWorkflowContext localContext)
+        {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
+            if (localContext == null)
+                throw new ArgumentNullException(nameof(localContext));
 
-				if (deleteSizeMax == 0) deleteSizeMax = int.MaxValue;
-				if (deleteSizeMin > deleteSizeMax)
-				{
-					tracer.Trace("Exception: {0}", "Min:" + deleteSizeMin + " Max:" + deleteSizeMax);
-					throw new InvalidPluginExecutionException("Minimum Size Cannot Be Greater Than Maximum Size");
-				}
+            EntityReference noteWithAttachment = NoteWithAttachment.Get(context);
+            int deleteSizeMax = DeleteSizeMax.Get(context);
+            int deleteSizeMin = DeleteSizeMin.Get(context);
+            string extensions = Extensions.Get(context);
+            bool appendNotice = AppendNotice.Get(context);
 
-				Entity note = GetNote(service, noteWithAttachment.Id);
-				if (!CheckForAttachment(note))
-					return;
+            if (deleteSizeMax == 0) deleteSizeMax = int.MaxValue;
+            if (deleteSizeMin > deleteSizeMax)
+            {
+                localContext.TracingService.Trace("Exception: {0}", "Min:" + deleteSizeMin + " Max:" + deleteSizeMax);
+                throw new InvalidPluginExecutionException("Minimum Size Cannot Be Greater Than Maximum Size");
+            }
 
-				string[] filetypes = new string[0];
-				if (!string.IsNullOrEmpty(extensions))
-					filetypes = extensions.Replace(".", string.Empty).Split(',');
+            Entity note = GetNote(localContext.OrganizationService, noteWithAttachment.Id);
+            if (!CheckForAttachment(note))
+                return;
 
-				StringBuilder notice = new StringBuilder();
-				int numberOfAttachmentsDeleted = 0;
+            string[] filetypes = new string[0];
+            if (!string.IsNullOrEmpty(extensions))
+                filetypes = extensions.Replace(".", string.Empty).Split(',');
 
-				bool delete = false;
+            StringBuilder notice = new StringBuilder();
+            int numberOfAttachmentsDeleted = 0;
 
-				if (note.GetAttributeValue<int>("filesize") >= deleteSizeMax)
-					delete = true;
+            bool delete = note.GetAttributeValue<int>("filesize") >= deleteSizeMax;
 
-				if (note.GetAttributeValue<int>("filesize") <= deleteSizeMin)
-					delete = true;
+            if (note.GetAttributeValue<int>("filesize") <= deleteSizeMin)
+                delete = true;
 
-				if (filetypes.Length > 0 && delete)
-					delete = ExtensionMatch(filetypes, note.GetAttributeValue<string>("filename"));
+            if (filetypes.Length > 0 && delete)
+                delete = ExtensionMatch(filetypes, note.GetAttributeValue<string>("filename"));
 
-				if (delete)
-				{
-					numberOfAttachmentsDeleted++;
+            if (delete)
+            {
+                numberOfAttachmentsDeleted++;
 
-					if (appendNotice)
-						notice.AppendLine("Deleted Attachment: " + note.GetAttributeValue<string>("filename") + " " +
-										  DateTime.Now.ToShortDateString());
+                if (appendNotice)
+                    notice.AppendLine("Deleted Attachment: " + note.GetAttributeValue<string>("filename") + " " +
+                                      DateTime.Now.ToShortDateString());
 
-					UpdateNote(service, note, notice.ToString());
-				}
+                UpdateNote(localContext.OrganizationService, note, notice.ToString());
+            }
 
-				NumberOfAttachmentsDeleted.Set(executionContext, numberOfAttachmentsDeleted);
-			}
-			catch (Exception ex)
-			{
-				tracer.Trace("Exception: {0}", ex.ToString());
-			}
-		}
+            NumberOfAttachmentsDeleted.Set(context, numberOfAttachmentsDeleted);
+        }
 
-		private static bool CheckForAttachment(Entity note)
-		{
-			object oIsAttachment;
-			bool hasValue = note.Attributes.TryGetValue("isdocument", out oIsAttachment);
-			if (!hasValue)
-				return false;
+        private static bool CheckForAttachment(Entity note)
+        {
+            bool hasValue = note.Attributes.TryGetValue("isdocument", out var oIsAttachment);
+            if (!hasValue)
+                return false;
 
-			return (bool)oIsAttachment;
-		}
+            return (bool)oIsAttachment;
+        }
 
-		private static Entity GetNote(IOrganizationService service, Guid noteId)
-		{
-			return service.Retrieve("annotation", noteId, new ColumnSet("filename", "filesize", "isdocument", "notetext"));
-		}
+        private static Entity GetNote(IOrganizationService service, Guid noteId)
+        {
+            return service.Retrieve("annotation", noteId, new ColumnSet("filename", "filesize", "isdocument", "notetext"));
+        }
 
-		private void UpdateNote(IOrganizationService service, Entity note, string notice)
-		{
-			Entity updateNote = new Entity("annotation");
-			updateNote.Id = note.Id;
-			if (!string.IsNullOrEmpty(notice))
-			{
-				string newText = note.GetAttributeValue<string>("notetext");
-				if (!string.IsNullOrEmpty(newText))
-					newText += "\r\n";
+        private static void UpdateNote(IOrganizationService service, Entity note, string notice)
+        {
+            Entity updateNote = new Entity("annotation") { Id = note.Id };
+            if (!string.IsNullOrEmpty(notice))
+            {
+                string newText = note.GetAttributeValue<string>("notetext");
+                if (!string.IsNullOrEmpty(newText))
+                    newText += "\r\n";
 
-				updateNote["notetext"] = newText + notice;
-			}
-			updateNote["isdocument"] = false;
-			updateNote["filename"] = null;
-			updateNote["documentbody"] = null;
-			updateNote["filesize"] = null;
+                updateNote["notetext"] = newText + notice;
+            }
+            updateNote["isdocument"] = false;
+            updateNote["filename"] = null;
+            updateNote["documentbody"] = null;
+            updateNote["filesize"] = null;
 
-			service.Update(updateNote);
-		}
+            service.Update(updateNote);
+        }
 
-		private static bool ExtensionMatch(IEnumerable<string> extenstons, string filename)
-		{
-			foreach (string ex in extenstons)
-			{
-				if (filename.EndsWith("." + ex))
-					return true;
-			}
-			return false;
-		}
-	}
+        private static bool ExtensionMatch(IEnumerable<string> extenstons, string filename)
+        {
+            foreach (string ex in extenstons)
+            {
+                if (filename.EndsWith("." + ex))
+                    return true;
+            }
+
+            return false;
+        }
+    }
 }

@@ -3,78 +3,78 @@ using Microsoft.Xrm.Sdk.Query;
 using Microsoft.Xrm.Sdk.Workflow;
 using System;
 using System.Activities;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace LAT.WorkflowUtilities.Note
 {
-	public class CopyNote : CodeActivity
-	{
-		[RequiredArgument]
-		[Input("Note To Copy")]
-		[ReferenceTarget("annotation")]
-		public InArgument<EntityReference> NoteToCopy { get; set; }
+    public sealed class CopyNote : WorkFlowActivityBase
+    {
+        public CopyNote() : base(typeof(CopyNote)) { }
 
-		[Input("Record Dynamic Url")]
-		[RequiredArgument]
-		public InArgument<string> RecordUrl { get; set; }
+        [RequiredArgument]
+        [Input("Note To Copy")]
+        [ReferenceTarget("annotation")]
+        public InArgument<EntityReference> NoteToCopy { get; set; }
 
-		[RequiredArgument]
-		[Default("True")]
-		[Input("Copy Attachment?")]
-		public InArgument<bool> CopyAttachment { get; set; }
+        [Input("Record Dynamic Url")]
+        [RequiredArgument]
+        public InArgument<string> RecordUrl { get; set; }
 
-		[Output("Was Note Copied")]
-		public OutArgument<bool> WasNoteCopied { get; set; }
-		protected override void Execute(CodeActivityContext executionContext)
-		{
-			ITracingService tracer = executionContext.GetExtension<ITracingService>();
-			IWorkflowContext context = executionContext.GetExtension<IWorkflowContext>();
-			IOrganizationServiceFactory serviceFactory = executionContext.GetExtension<IOrganizationServiceFactory>();
-			IOrganizationService service = serviceFactory.CreateOrganizationService(context.UserId);
+        [RequiredArgument]
+        [Default("True")]
+        [Input("Copy Attachment?")]
+        public InArgument<bool> CopyAttachment { get; set; }
 
-			try
-			{
-				EntityReference noteToCopy = NoteToCopy.Get(executionContext);
-				string recordUrl = RecordUrl.Get<string>(executionContext);
-				bool copyAttachment = CopyAttachment.Get(executionContext);
+        [Output("Was Note Copied")]
+        public OutArgument<bool> WasNoteCopied { get; set; }
 
-				var dup = new DynamicUrlParser(recordUrl);
+        protected override void ExecuteCrmWorkFlowActivity(CodeActivityContext context, LocalWorkflowContext localContext)
+        {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
+            if (localContext == null)
+                throw new ArgumentNullException(nameof(localContext));
 
-				string newEntityLogical = dup.GetEntityLogicalName(service);
+            EntityReference noteToCopy = NoteToCopy.Get(context);
+            string recordUrl = RecordUrl.Get<string>(context);
+            bool copyAttachment = CopyAttachment.Get(context);
 
-				Entity note = GetNote(service, noteToCopy.Id);
-				if (note.GetAttributeValue<EntityReference>("objectid").Id == dup.Id && note.GetAttributeValue<EntityReference>("objectid").LogicalName == newEntityLogical)
-				{
-					WasNoteCopied.Set(executionContext, false);
-					return;
-				}
+            var dup = new DynamicUrlParser(recordUrl);
 
-				Entity newNote = new Entity("annotation");
-				newNote["objectid"] = new EntityReference(newEntityLogical, dup.Id);
-				newNote["notetext"] = note.GetAttributeValue<string>("notetext");
-				newNote["subject"] = note.GetAttributeValue<string>("subject");
-				if (copyAttachment)
-				{
-					newNote["isdocument"] = note.GetAttributeValue<bool>("isdocument");
-					newNote["filename"] = note.GetAttributeValue<string>("filename");
-					newNote["filesize"] = note.GetAttributeValue<int>("filesize");
-					newNote["documentbody"] = note.GetAttributeValue<string>("documentbody");
-				}
-				else
-					newNote["isdocument"] = false;
+            string newEntityLogical = dup.GetEntityLogicalName(localContext.OrganizationService);
 
-				service.Create(newNote);
+            Entity note = GetNote(localContext.OrganizationService, noteToCopy.Id);
+            if (note.GetAttributeValue<EntityReference>("objectid").Id == dup.Id && note.GetAttributeValue<EntityReference>("objectid").LogicalName == newEntityLogical)
+            {
+                WasNoteCopied.Set(context, false);
+                return;
+            }
 
-				WasNoteCopied.Set(executionContext, true);
-			}
-			catch (Exception e)
-			{
-				throw new InvalidPluginExecutionException(e.Message);
-			}
-		}
+            Entity newNote = new Entity("annotation")
+            {
+                ["objectid"] = new EntityReference(newEntityLogical, dup.Id),
+                ["notetext"] = note.GetAttributeValue<string>("notetext"),
+                ["subject"] = note.GetAttributeValue<string>("subject")
+            };
+            if (copyAttachment)
+            {
+                newNote["isdocument"] = note.GetAttributeValue<bool>("isdocument");
+                newNote["filename"] = note.GetAttributeValue<string>("filename");
+                newNote["filesize"] = note.GetAttributeValue<int>("filesize");
+                newNote["documentbody"] = note.GetAttributeValue<string>("documentbody");
+            }
+            else
+                newNote["isdocument"] = false;
 
-		private Entity GetNote(IOrganizationService service, Guid noteId)
-		{
-			return service.Retrieve("annotation", noteId, new ColumnSet("objectid", "documentbody", "filename", "filesize", "isdocument", "notetext", "subject"));
-		}
-	}
+            localContext.OrganizationService.Create(newNote);
+
+            WasNoteCopied.Set(context, true);
+        }
+
+        private static Entity GetNote(IOrganizationService service, Guid noteId)
+        {
+            return service.Retrieve("annotation", noteId, new ColumnSet("objectid", "documentbody", "filename", "filesize", "isdocument", "notetext", "subject"));
+        }
+    }
 }

@@ -2,46 +2,45 @@
 using Microsoft.Xrm.Sdk.Workflow;
 using System;
 using System.Activities;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace LAT.WorkflowUtilities.Note
 {
-	public class UpdateNoteTitle : CodeActivity
-	{
-		[RequiredArgument]
-		[Input("Note To Update")]
-		[ReferenceTarget("annotation")]
-		public InArgument<EntityReference> NoteToUpdate { get; set; }
+    public sealed class UpdateNoteTitle : WorkFlowActivityBase
+    {
+        public UpdateNoteTitle() : base(typeof(UpdateNoteTitle)) { }
 
-		[RequiredArgument]
-		[Input("New Title")]
-		public InArgument<string> NewTitle { get; set; }
+        [RequiredArgument]
+        [Input("Note To Update")]
+        [ReferenceTarget("annotation")]
+        public InArgument<EntityReference> NoteToUpdate { get; set; }
 
-		[Output("Updated Title")]
-		public OutArgument<string> UpdatedTitle { get; set; }
+        [RequiredArgument]
+        [Input("New Title")]
+        public InArgument<string> NewTitle { get; set; }
 
-		protected override void Execute(CodeActivityContext executionContext)
-		{
-			ITracingService tracer = executionContext.GetExtension<ITracingService>();
-			IWorkflowContext context = executionContext.GetExtension<IWorkflowContext>();
-			IOrganizationServiceFactory serviceFactory = executionContext.GetExtension<IOrganizationServiceFactory>();
-			IOrganizationService service = serviceFactory.CreateOrganizationService(context.UserId);
+        [Output("Updated Title")]
+        public OutArgument<string> UpdatedTitle { get; set; }
 
-			try
-			{
-				EntityReference noteToUpdate = NoteToUpdate.Get(executionContext);
-				string newTitle = NewTitle.Get(executionContext);
+        protected override void ExecuteCrmWorkFlowActivity(CodeActivityContext context, LocalWorkflowContext localContext)
+        {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
+            if (localContext == null)
+                throw new ArgumentNullException(nameof(localContext));
 
-				Entity note = new Entity("annotation");
-				note.Id = noteToUpdate.Id;
-				note["subject"] = newTitle;
-				service.Update(note);
+            EntityReference noteToUpdate = NoteToUpdate.Get(context);
+            string newTitle = NewTitle.Get(context);
 
-				UpdatedTitle.Set(executionContext, newTitle);
-			}
-			catch (Exception e)
-			{
-				throw new InvalidPluginExecutionException(e.Message);
-			}
-		}
-	}
+            Entity note = new Entity("annotation")
+            {
+                Id = noteToUpdate.Id,
+                ["subject"] = newTitle
+            };
+            localContext.OrganizationService.Update(note);
+
+            UpdatedTitle.Set(context, newTitle);
+        }
+    }
 }

@@ -3,48 +3,43 @@ using Microsoft.Xrm.Sdk.Query;
 using Microsoft.Xrm.Sdk.Workflow;
 using System;
 using System.Activities;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace LAT.WorkflowUtilities.Note
 {
-	public class CheckAttachment : CodeActivity
-	{
-		[RequiredArgument]
-		[Input("Note To Check")]
-		[ReferenceTarget("annotation")]
-		public InArgument<EntityReference> NoteToCheck { get; set; }
+    public sealed class CheckAttachment : WorkFlowActivityBase
+    {
+        public CheckAttachment() : base(typeof(CheckAttachment)) { }
 
-		[Output("Has Attachment")]
-		public OutArgument<bool> HasAttachment { get; set; }
+        [RequiredArgument]
+        [Input("Note To Check")]
+        [ReferenceTarget("annotation")]
+        public InArgument<EntityReference> NoteToCheck { get; set; }
 
-		protected override void Execute(CodeActivityContext executionContext)
-		{
-			ITracingService tracer = executionContext.GetExtension<ITracingService>();
-			IWorkflowContext context = executionContext.GetExtension<IWorkflowContext>();
-			IOrganizationServiceFactory serviceFactory = executionContext.GetExtension<IOrganizationServiceFactory>();
-			IOrganizationService service = serviceFactory.CreateOrganizationService(context.UserId);
+        [Output("Has Attachment")]
+        public OutArgument<bool> HasAttachment { get; set; }
 
-			try
-			{
-				EntityReference noteToCheck = NoteToCheck.Get(executionContext);
+        protected override void ExecuteCrmWorkFlowActivity(CodeActivityContext context, LocalWorkflowContext localContext)
+        {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
+            if (localContext == null)
+                throw new ArgumentNullException(nameof(localContext));
+            EntityReference noteToCheck = NoteToCheck.Get(context);
 
-				HasAttachment.Set(executionContext, CheckForAttachment(service, noteToCheck.Id));
-			}
-			catch (Exception ex)
-			{
-				tracer.Trace("Exception: {0}", ex.ToString());
-			}
-		}
+            HasAttachment.Set(context, CheckForAttachment(localContext.OrganizationService, noteToCheck.Id));
+        }
 
-		private static bool CheckForAttachment(IOrganizationService service, Guid noteId)
-		{
-			Entity note = service.Retrieve("annotation", noteId, new ColumnSet("isdocument"));
+        private static bool CheckForAttachment(IOrganizationService service, Guid noteId)
+        {
+            Entity note = service.Retrieve("annotation", noteId, new ColumnSet("isdocument"));
 
-			object oIsDocument;
-			bool hasValue = note.Attributes.TryGetValue("isdocument", out oIsDocument);
-			if (!hasValue)
-				return false;
+            bool hasValue = note.Attributes.TryGetValue("isdocument", out var oIsDocument);
+            if (!hasValue)
+                return false;
 
-			return (bool)oIsDocument;
-		}
-	}
+            return (bool)oIsDocument;
+        }
+    }
 }

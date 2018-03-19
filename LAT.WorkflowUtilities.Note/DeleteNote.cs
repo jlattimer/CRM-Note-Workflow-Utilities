@@ -2,38 +2,35 @@
 using Microsoft.Xrm.Sdk.Workflow;
 using System;
 using System.Activities;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace LAT.WorkflowUtilities.Note
 {
-	public class DeleteNote : CodeActivity
-	{
-		[RequiredArgument]
-		[Input("Note To Delete")]
-		[ReferenceTarget("annotation")]
-		public InArgument<EntityReference> NoteToDelete { get; set; }
+    public sealed class DeleteNote : WorkFlowActivityBase
+    {
+        public DeleteNote() : base(typeof(DeleteNote)) { }
 
-		[Output("Was Note Deleted")]
-		public OutArgument<bool> WasNoteDeleted { get; set; }
+        [RequiredArgument]
+        [Input("Note To Delete")]
+        [ReferenceTarget("annotation")]
+        public InArgument<EntityReference> NoteToDelete { get; set; }
 
-		protected override void Execute(CodeActivityContext executionContext)
-		{
-			ITracingService tracer = executionContext.GetExtension<ITracingService>();
-			IWorkflowContext context = executionContext.GetExtension<IWorkflowContext>();
-			IOrganizationServiceFactory serviceFactory = executionContext.GetExtension<IOrganizationServiceFactory>();
-			IOrganizationService service = serviceFactory.CreateOrganizationService(context.UserId);
+        [Output("Was Note Deleted")]
+        public OutArgument<bool> WasNoteDeleted { get; set; }
 
-			try
-			{
-				EntityReference noteToDelete = NoteToDelete.Get(executionContext);
+        protected override void ExecuteCrmWorkFlowActivity(CodeActivityContext context, LocalWorkflowContext localContext)
+        {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
+            if (localContext == null)
+                throw new ArgumentNullException(nameof(localContext));
 
-				service.Delete("annotation", noteToDelete.Id);
+            EntityReference noteToDelete = NoteToDelete.Get(context);
 
-				WasNoteDeleted.Set(executionContext, true);
-			}
-			catch (Exception e)
-			{
-				throw new InvalidPluginExecutionException(e.Message);
-			}
-		}
-	}
+            localContext.OrganizationService.Delete("annotation", noteToDelete.Id);
+
+            WasNoteDeleted.Set(context, true);
+        }
+    }
 }
