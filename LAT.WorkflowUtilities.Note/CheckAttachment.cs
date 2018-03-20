@@ -26,6 +26,7 @@ namespace LAT.WorkflowUtilities.Note
                 throw new ArgumentNullException(nameof(context));
             if (localContext == null)
                 throw new ArgumentNullException(nameof(localContext));
+
             EntityReference noteToCheck = NoteToCheck.Get(context);
 
             HasAttachment.Set(context, CheckForAttachment(localContext.OrganizationService, noteToCheck.Id));

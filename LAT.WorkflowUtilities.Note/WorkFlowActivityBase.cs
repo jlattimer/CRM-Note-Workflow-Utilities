@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Workflow;
+using System;
 using System.Activities;
 using System.Diagnostics;
 using System.Globalization;
@@ -6,8 +8,6 @@ using System.Linq;
 using System.Reflection;
 using System.ServiceModel;
 using System.Text;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Workflow;
 
 // ReSharper disable MemberCanBePrivate.Global
 
