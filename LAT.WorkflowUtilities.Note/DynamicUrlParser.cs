@@ -74,7 +74,7 @@ namespace LAT.WorkflowUtilities.Note
                 Properties = propertyExpression
             };
 
-            var retrieveMetadataChangesRequest = new RetrieveMetadataChangesRequest()
+            var retrieveMetadataChangesRequest = new RetrieveMetadataChangesRequest
             {
                 Query = entityQueryExpression
             };
