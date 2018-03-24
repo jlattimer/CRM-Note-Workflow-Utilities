@@ -51,7 +51,7 @@ namespace LAT.WorkflowUtilities.Note.Tests
 
             XrmFakedContext xrmFakedContext = new XrmFakedContext();
             xrmFakedContext.Initialize(new List<Entity> { note });
-            var fakeRetrieveMetadataChangesRequest = new FakeRetrieveMetadataChangesRequesteExecutor();
+            var fakeRetrieveMetadataChangesRequest = new FakeRetrieveMetadataChangesRequestExecutor();
             xrmFakedContext.AddFakeMessageExecutor<RetrieveMetadataChangesRequest>(fakeRetrieveMetadataChangesRequest);
 
             const bool expected = true;
@@ -84,7 +84,7 @@ namespace LAT.WorkflowUtilities.Note.Tests
 
             XrmFakedContext xrmFakedContext = new XrmFakedContext();
             xrmFakedContext.Initialize(new List<Entity> { note });
-            var fakeRetrieveMetadataChangesRequest = new FakeRetrieveMetadataChangesRequesteExecutor();
+            var fakeRetrieveMetadataChangesRequest = new FakeRetrieveMetadataChangesRequestExecutor();
             xrmFakedContext.AddFakeMessageExecutor<RetrieveMetadataChangesRequest>(fakeRetrieveMetadataChangesRequest);
 
             const bool expected = false;
@@ -96,7 +96,7 @@ namespace LAT.WorkflowUtilities.Note.Tests
             Assert.AreEqual(expected, result["WasNoteCopied"]);
         }
 
-        private class FakeRetrieveMetadataChangesRequesteExecutor : IFakeMessageExecutor
+        private class FakeRetrieveMetadataChangesRequestExecutor : IFakeMessageExecutor
         {
             public bool CanExecute(OrganizationRequest request)
             {
