@@ -28,7 +28,7 @@ namespace LAT.WorkflowUtilities.Note.Tests
         #endregion
 
         [TestMethod]
-        public void HasAttachment()
+        public void CheckAttachment_Has_Attachment()
         {
             //Arrange
             XrmFakedWorkflowContext workflowContext = new XrmFakedWorkflowContext();
@@ -60,7 +60,7 @@ namespace LAT.WorkflowUtilities.Note.Tests
         }
 
         [TestMethod]
-        public void NoAttachment()
+        public void CheckAttachment_No_Attachment()
         {
             //Arrange
             XrmFakedWorkflowContext workflowContext = new XrmFakedWorkflowContext();

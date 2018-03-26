@@ -28,7 +28,7 @@ namespace LAT.WorkflowUtilities.Note.Tests
         #endregion
 
         [TestMethod]
-        public void DeleteNote()
+        public void DeleteNote_Delete()
         {
             //Arrange
             XrmFakedWorkflowContext workflowContext = new XrmFakedWorkflowContext();

@@ -31,7 +31,7 @@ namespace LAT.WorkflowUtilities.Note.Tests
         #endregion
 
         [TestMethod]
-        public void MoveToNewRecord()
+        public void MoveNote_Move_To_New_Record()
         {
             //Arrange
             XrmFakedWorkflowContext workflowContext = new XrmFakedWorkflowContext();
@@ -63,7 +63,7 @@ namespace LAT.WorkflowUtilities.Note.Tests
         }
 
         [TestMethod]
-        public void MoveToSameRecord()
+        public void MoveNote_Move_To_Same_Record()
         {
             //Arrange
             XrmFakedWorkflowContext workflowContext = new XrmFakedWorkflowContext();
@@ -96,7 +96,7 @@ namespace LAT.WorkflowUtilities.Note.Tests
 
         [TestMethod]
         [ExpectedException(typeof(Exception), "Url 'https://test.crm.dynamics.com:443/main.aspx?etc=1&id=ba166c72-5f7b-e611-80db-fc15b2d80&histKey=694632068&newWindow=true&pagetype=entityrecord' is incorrectly formated for a Dynamics CRM Dynamics Url")]
-        public void InvalidRecordUrl()
+        public void MoveNote_Invalid_Record_Url()
         {
             //Arrange
             XrmFakedWorkflowContext workflowContext = new XrmFakedWorkflowContext();

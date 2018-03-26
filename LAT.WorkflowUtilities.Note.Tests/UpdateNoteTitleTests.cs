@@ -28,7 +28,7 @@ namespace LAT.WorkflowUtilities.Note.Tests
         #endregion
 
         [TestMethod]
-        public void SetTitle()
+        public void UpdateNoteTitle_Set_Title()
         {
             //Arrange
             XrmFakedWorkflowContext workflowContext = new XrmFakedWorkflowContext();
@@ -57,7 +57,7 @@ namespace LAT.WorkflowUtilities.Note.Tests
         }
 
         [TestMethod]
-        public void SetNullTitle()
+        public void UpdateNoteTitle_Set_Null_Title()
         {
             //Arrange
             XrmFakedWorkflowContext workflowContext = new XrmFakedWorkflowContext();
