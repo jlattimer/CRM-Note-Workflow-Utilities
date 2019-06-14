@@ -53,7 +53,7 @@ namespace LAT.WorkflowUtilities.Note
             }
             catch (Exception ex)
             {
-                throw new Exception($"Url '{url}' is incorrectly formated for a Dynamics CRM Dynamics Url", ex);
+                throw new Exception($"Url '{url}' is incorrectly formatted for a Dynamics 365 CE Dynamic Record Url", ex);
             }
         }
 
@@ -65,10 +65,10 @@ namespace LAT.WorkflowUtilities.Note
         public string GetEntityLogicalName(IOrganizationService service)
         {
             var entityFilter = new MetadataFilterExpression(LogicalOperator.And);
-            entityFilter.Conditions.Add(new MetadataConditionExpression("ObjectTypeCode ", MetadataConditionOperator.Equals, this.EntityTypeCode));
+            entityFilter.Conditions.Add(new MetadataConditionExpression("ObjectTypeCode ", MetadataConditionOperator.Equals, EntityTypeCode));
             var propertyExpression = new MetadataPropertiesExpression { AllProperties = false };
             propertyExpression.PropertyNames.Add("LogicalName");
-            var entityQueryExpression = new EntityQueryExpression()
+            var entityQueryExpression = new EntityQueryExpression
             {
                 Criteria = entityFilter,
                 Properties = propertyExpression
