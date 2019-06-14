@@ -84,6 +84,8 @@
     <Compile Include="DeleteAttachment.cs" />
     <Compile Include="DeleteAttachmentByName.cs" />
     <Compile Include="DeleteNote.cs" />
+    <Compile Include="GetLatestNote.cs" />
+    <Compile Include="GetLatestNoteByFilename.cs" />
     <Compile Include="MoveNote.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Settings.Designer.cs">

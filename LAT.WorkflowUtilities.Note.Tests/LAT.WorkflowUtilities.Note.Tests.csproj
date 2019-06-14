@@ -146,6 +146,8 @@
     <Compile Include="CopyNoteTests.cs" />
     <Compile Include="DeleteAttachmentByNameTests.cs" />
     <Compile Include="DeleteAttachmentTests.cs" />
+    <Compile Include="GetLatestNoteByFilenameTests.cs" />
+    <Compile Include="GetLatestNoteTests.cs" />
     <Compile Include="DeleteNoteTests.cs" />
     <Compile Include="MoveNoteTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
