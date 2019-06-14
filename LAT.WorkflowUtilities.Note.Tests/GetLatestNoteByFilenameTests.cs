@@ -33,7 +33,7 @@ namespace LAT.WorkflowUtilities.Note.Tests
             $"https://test.crm.dynamics.com:443/main.aspx?etc=1&id={SourceRecordId.ToString()}&histKey=912214339&newWindow=true&pagetype=entityrecord";
 
         [TestMethod]
-        public void GetLatestNote_Multiple_Same_Regarding_Same_Filenames()
+        public void GetLatestNoteByFilename_Multiple_Same_Regarding_Same_Filenames()
         {
             //Arrange
             XrmFakedWorkflowContext workflowContext = new XrmFakedWorkflowContext();
@@ -81,7 +81,7 @@ namespace LAT.WorkflowUtilities.Note.Tests
         }
 
         [TestMethod]
-        public void GetLatestNote_Multiple_Same_Regarding_Different_Filenames()
+        public void GetLatestNoteByFilename_Multiple_Same_Regarding_Different_Filenames()
         {
             //Arrange
             XrmFakedWorkflowContext workflowContext = new XrmFakedWorkflowContext();
@@ -129,7 +129,7 @@ namespace LAT.WorkflowUtilities.Note.Tests
         }
 
         [TestMethod]
-        public void GetLatestNote_Multiple_Different_Regarding_Same_Filename()
+        public void GetLatestNoteByFilename_Multiple_Different_Regarding_Same_Filename()
         {
             //Arrange
             XrmFakedWorkflowContext workflowContext = new XrmFakedWorkflowContext();
@@ -177,7 +177,7 @@ namespace LAT.WorkflowUtilities.Note.Tests
         }
 
         [TestMethod]
-        public void GetLatestNote_Multiple_Different_Regarding_Different_Filename()
+        public void GetLatestNoteByFilename_Multiple_Different_Regarding_Different_Filename()
         {
             //Arrange
             XrmFakedWorkflowContext workflowContext = new XrmFakedWorkflowContext();
