@@ -84,5 +84,23 @@ namespace LAT.WorkflowUtilities.Note.Tests
             //Assert
             Assert.AreEqual(expected, result["UpdatedText"]);
         }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException), "Note cannot be null")]
+        public void UpdateNoteText_Null_Note()
+        {
+            //Arrange
+            XrmFakedWorkflowContext workflowContext = new XrmFakedWorkflowContext();
+
+            var inputs = new Dictionary<string, object>
+            {
+                { "NoteToCheck", null }
+            };
+
+            XrmFakedContext xrmFakedContext = new XrmFakedContext();
+
+            //Act
+            xrmFakedContext.ExecuteCodeActivity<CheckAttachment>(workflowContext, inputs);
+        }
     }
 }

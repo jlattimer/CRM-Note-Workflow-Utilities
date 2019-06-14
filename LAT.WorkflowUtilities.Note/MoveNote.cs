@@ -32,6 +32,9 @@ namespace LAT.WorkflowUtilities.Note
                 throw new ArgumentNullException(nameof(localContext));
 
             EntityReference noteToMove = NoteToMove.Get(context);
+            if (noteToMove == null)
+                throw new ArgumentNullException("Note cannot be null");
+
             string recordUrl = RecordUrl.Get<string>(context);
 
             var dup = new DynamicUrlParser(recordUrl);

@@ -44,6 +44,9 @@ namespace LAT.WorkflowUtilities.Note
                 throw new ArgumentNullException(nameof(localContext));
 
             EntityReference noteWithAttachment = NoteWithAttachment.Get(context);
+            if (noteWithAttachment == null)
+                throw new ArgumentNullException("Note cannot be null");
+
             int deleteSizeMax = DeleteSizeMax.Get(context);
             int deleteSizeMin = DeleteSizeMin.Get(context);
             string extensions = Extensions.Get(context);

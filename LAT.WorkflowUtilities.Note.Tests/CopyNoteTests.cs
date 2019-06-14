@@ -96,6 +96,24 @@ namespace LAT.WorkflowUtilities.Note.Tests
             Assert.AreEqual(expected, result["WasNoteCopied"]);
         }
 
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException), "Note cannot be null")]
+        public void CopyNote_Null_Note()
+        {
+            //Arrange
+            XrmFakedWorkflowContext workflowContext = new XrmFakedWorkflowContext();
+
+            var inputs = new Dictionary<string, object>
+            {
+                { "NoteToCheck", null }
+            };
+
+            XrmFakedContext xrmFakedContext = new XrmFakedContext();
+
+            //Act
+            xrmFakedContext.ExecuteCodeActivity<CheckAttachment>(workflowContext, inputs);
+        }
+
         private class FakeRetrieveMetadataChangesRequestExecutor : IFakeMessageExecutor
         {
             public bool CanExecute(OrganizationRequest request)

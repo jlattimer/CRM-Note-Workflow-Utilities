@@ -37,6 +37,9 @@ namespace LAT.WorkflowUtilities.Note
                 throw new ArgumentNullException(nameof(localContext));
 
             EntityReference noteToCopy = NoteToCopy.Get(context);
+            if (noteToCopy == null)
+                throw new ArgumentNullException("Note cannot be null");
+
             string recordUrl = RecordUrl.Get<string>(context);
             bool copyAttachment = CopyAttachment.Get(context);
 

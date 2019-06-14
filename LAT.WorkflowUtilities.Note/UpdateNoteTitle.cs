@@ -31,6 +31,9 @@ namespace LAT.WorkflowUtilities.Note
                 throw new ArgumentNullException(nameof(localContext));
 
             EntityReference noteToUpdate = NoteToUpdate.Get(context);
+            if (noteToUpdate == null)
+                throw new ArgumentNullException("Note cannot be null");
+
             string newTitle = NewTitle.Get(context);
 
             Entity note = new Entity("annotation")

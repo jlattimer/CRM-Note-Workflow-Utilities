@@ -27,6 +27,8 @@ namespace LAT.WorkflowUtilities.Note
                 throw new ArgumentNullException(nameof(localContext));
 
             EntityReference noteToDelete = NoteToDelete.Get(context);
+            if (noteToDelete == null)
+                throw new ArgumentNullException("Note cannot be null");
 
             localContext.OrganizationService.Delete("annotation", noteToDelete.Id);
 

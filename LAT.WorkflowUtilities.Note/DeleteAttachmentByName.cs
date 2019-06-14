@@ -38,6 +38,9 @@ namespace LAT.WorkflowUtilities.Note
                 throw new ArgumentNullException(nameof(localContext));
 
             EntityReference noteWithAttachment = NoteWithAttachment.Get(context);
+            if (noteWithAttachment == null)
+                throw new ArgumentNullException("Note cannot be null");
+
             string fileName = FileName.Get(context);
             bool appendNotice = AppendNotice.Get(context);
 

@@ -54,5 +54,23 @@ namespace LAT.WorkflowUtilities.Note.Tests
             //Assert
             Assert.AreEqual(expected, result["WasNoteDeleted"]);
         }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException), "Note cannot be null")]
+        public void DeleteNote_Null_Note()
+        {
+            //Arrange
+            XrmFakedWorkflowContext workflowContext = new XrmFakedWorkflowContext();
+
+            var inputs = new Dictionary<string, object>
+            {
+                { "NoteToCheck", null }
+            };
+
+            XrmFakedContext xrmFakedContext = new XrmFakedContext();
+
+            //Act
+            xrmFakedContext.ExecuteCodeActivity<CheckAttachment>(workflowContext, inputs);
+        }
     }
 }
